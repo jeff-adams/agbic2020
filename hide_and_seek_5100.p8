@@ -41,6 +41,7 @@ function create_player(_x,_y,_c)
 		dirx=0,
 		diry=0,
 		c=_c,
+		flipped=false,
 		speed=1,
 		boosting=false,
 		boosttimer=0,
@@ -67,30 +68,38 @@ function update_menu()
 end
 
 function update_game()
-	controller_input()
-	player_movement()
+	for _i=1,numplayers do
+		local _p=players[_i]
+		controller_input(_i,_p)
+		boost_adjustments(_p)
+		player_movement(_p)
+	end
 end
 
-function controller_input()
-	for _p=0,numplayers-1 do
-		local _player=players[_p+1]
-		for _b=0,3 do
-			if btn(_b,_p) then
-				add_debug("p"..(_p+1).." speed",players[_p+1].speed,2)
-				dir_input(_b,_player)
-			end
+function controller_input(_pnum,_player)
+	--adjust player num for btn
+	_pnum-=1
+	--direction controls
+	for _b=0,3 do
+		if btn(_b,_pnum) then
+			dir_input(_b,_player)
 		end
-		if btn(5,_p) then
-			player_boost(_player)
-		end
+	end
+	--boost button
+	if btn(5,_pnum) then
+		player_boosting(_player)
+	else
+		_player.boosting=false
 	end
 end
 
 function dir_input(_btn,_player)
 	if _btn==0 then
 		_player.dirx=-1
+		_player.flipped=false
 	elseif _btn==1 then
 		_player.dirx=1
+		_player.flipped=true
 	elseif _btn==2 then
 		_player.diry=-1
 	else
@@ -98,36 +107,41 @@ function dir_input(_btn,_player)
 	end
 end
 
-function player_boost(_p)
-local _maxspeed,_maxboost,_cdtarget,boostlength=2,1,3,1
-	if _p.boosting then
-		--continue boosting
-		add_debug("pspeed",_p.speed,1)
-		_p.speed=min(_maxspeed,_p.speed*(_p.boosttimer+1))
-		_p.boosttimer+=1
-		if _p.boosttimer>=boostlength*refresh then
-			_p.speed=1
-			_p.boosttimer=0
-			_p.boostcool=_cdtarget
-			_p.boosting=false
-		end
-	elseif not _p.boosting and _p.boostcool==0 then
+function player_boosting(_p)
+	local _maxspeed,_maxboost=2,1
+	if not _p.boosting and _p.boostcool==0 then
 		--start boosting
 		_p.boosting=true
-	else
-		--cant boost
+	end
+	if _p.boosting then
+		--continue boosting
+		_p.speed=min(_maxspeed,_p.speed*(_p.boosttimer+1))
 	end
 end
 
-function player_movement()
-	for _player in all(players) do
-		--collision check here
-		_player.x+=_player.dirx*_player.speed
-		_player.y+=_player.diry*_player.speed
-		_player.dirx=0
-		_player.diry=0
-		_player.boostcool=max(0,_player.boostcool-1)
+function boost_adjustments(_player)
+	local _boostlength,_cooldown=1,3
+	_player.boostcool=max(0,_player.boostcool-1)
+	if _player.boosttimer>=_boostlength*refresh then
+		_player.boosting=false
+		_player.boostcool=_cooldown*refresh
 	end
+	if not _player.boosting then
+		_player.speed=1
+		_player.boosttimer=0
+		_player.boosting=false
+	else
+		_player.boosttimer+=1
+	end
+end
+
+function player_movement(_player)
+	--collision check here
+	--player position adjustments
+	_player.x+=_player.dirx*_player.speed
+	_player.y+=_player.diry*_player.speed
+	_player.dirx=0
+	_player.diry=0
 end
 
 -->8
@@ -149,7 +163,7 @@ function draw_player(_player)
 	palt(0,false)
 	palt(11,true)
 	pal(15,_player.c)
-	spr(1,_player.x,_player.y)
+	spr(1,_player.x,_player.y,1,1,_player.flipped)
 	pal()
 end
 -->8
