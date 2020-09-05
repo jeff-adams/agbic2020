@@ -10,6 +10,7 @@ __lua__
 function _init()
 	debug={}
 	refresh=stat(8)
+	cooldown=3
 	fading=0
 	change_state(update_menu,draw_menu)
 	init_players()
@@ -28,10 +29,10 @@ end
 function init_players()
 	numplayers=1
 	players={}
-	add(players,create_player(0,0,12))
-	add(players,create_player(120,0,14))
-	add(players,create_player(0,120,8))
-	add(players,create_player(120,120,9))
+	add(players,create_player(1,1,12))
+	add(players,create_player(119,1,14))
+	add(players,create_player(1,119,8))
+	add(players,create_player(119,119,9))
 end
 
 function create_player(_x,_y,_c)
@@ -55,13 +56,11 @@ end
 function update_menu()
 	if btnp(➡️) then
 		numplayers=min(#players,numplayers+1)
-		add_debug("players",numplayers,2)
 	end
 	if btnp(⬅️) then
 		numplayers=max(1,numplayers-1)
-		add_debug("players",numplayers,2)
 	end
-	if btnp(❎) then
+	if btnp(🅾️) then
 		players=subtable(players,1,numplayers)
 		change_state(update_game,draw_game)
 	end
@@ -112,6 +111,7 @@ function player_boosting(_p)
 	if not _p.boosting and _p.boostcool==0 then
 		--start boosting
 		_p.boosting=true
+		_p.boostcool=cooldown
 	end
 	if _p.boosting then
 		--continue boosting
@@ -120,16 +120,15 @@ function player_boosting(_p)
 end
 
 function boost_adjustments(_player)
-	local _boostlength,_cooldown=1,3
+	local _boostlength=1
 	_player.boostcool=max(0,_player.boostcool-1)
 	if _player.boosttimer>=_boostlength*refresh then
 		_player.boosting=false
-		_player.boostcool=_cooldown*refresh
+		_player.boostcool=cooldown*refresh
 	end
 	if not _player.boosting then
 		_player.speed=1
 		_player.boosttimer=0
-		_player.boosting=false
 	else
 		_player.boosttimer+=1
 	end
@@ -138,17 +137,21 @@ end
 function player_movement(_player)
 	--collision check here
 	--player position adjustments
+	--adjust speed if going diag
+	if _player.dirx!=0 and _player.diry!=0 then
+		_player.speed*=0.75
+	end
 	_player.x+=_player.dirx*_player.speed
 	_player.y+=_player.diry*_player.speed
 	_player.dirx=0
 	_player.diry=0
 end
-
 -->8
 --draw
 
 function draw_menu()
-	print("menu",58,64,7)
+	printc("hide and seek 5100",30,10,9)
+	printc("< "..numplayers.." players >",76,7)
 end
 
 function draw_game()
@@ -208,7 +211,7 @@ function shuffle(objs)
 end
 
 function printc(_text,_y,_c,_oc)
-	local _x=(127-#_text/2*8)/2
+	local _x=63-(#_text*4)/2
 	if _oc then
 		printo(_text,_x,_y,_c,_oc)
 	else
@@ -319,14 +322,14 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-66666666d555555d66aaaaaaaaaaaaaaaaaaaa66aaaaaaaa66aaaa66aaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
-66666666676666766aaaaaaaaaaaaaaaaaaaaaa6aaaaaaaa6aaaaaa6aaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
-6666666666766766aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
-6666666666677666aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
-6666666666677666aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
-6666666666766766aaa9aaa9aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa9aaaaaa90000000000000000000000000000000000000000000000000000000000000000
-666666666766667669aaa9aaaaaaaaaaaaaaaa96aaaaaaaaaaaaaaaa69aaaa960000000000000000000000000000000000000000000000000000000000000000
-6666666676666667669999999999999999999966aaaaaaaaaaaaaaaa669999660000000000000000000000000000000000000000000000000000000000000000
+77777777d555555daaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
+7666666667666676aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
+7666666666766766aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
+7666666666677666aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
+7666666666677666aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
+7666666666766766aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
+7666666667666676aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000000000000000000000000000000000000000000000000000000
+7666666676666667999999999999999999999999aaaaaaaaaaaaaaaa999999990000000000000000000000000000000000000000000000000000000000000000
 __map__
 4040404040404040404040404040404000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 4040404040404640404040464040404000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
